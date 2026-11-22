@@ -34,7 +34,7 @@ h3 {
   margin-top: 18px;
 }
 
-input, button, select {
+input, button, select, textarea {
   padding: 9px;
   margin: 5px 0;
   border-radius: 6px;
@@ -42,7 +42,13 @@ input, button, select {
   max-width: 100%;
 }
 
-input[type="text"] { width: 100%; }
+input[type="text"], textarea { width: 100%; }
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+  font-family: Arial, sans-serif;
+}
 
 button {
   background: #1565c0;
@@ -73,9 +79,7 @@ button:hover { opacity: .85; }
   overflow-wrap: anywhere;
 }
 
-.number b {
-  font-size: 15px;
-}
+.number b { font-size: 15px; }
 
 .hot {
   color: #d32f2f;
@@ -125,7 +129,19 @@ hr {
 <label>Ngày thống kê:</label><br>
 <input type="date" id="date"><br>
 
-<label>Nhập các số cuối:</label>
+<label>Dán dữ liệu từ cộng đồng:</label>
+<textarea id="rawData"
+placeholder="Dán nguyên văn dữ liệu vào đây...&#10;Ví dụ: Ngày: 2026-11-22 | Tổng số kết quả: 135 | Các số: 04, 86, 28, 33, 67..."></textarea>
+
+<button class="btn-green" onclick="filterNumbers()">
+TỰ ĐỘNG LỌC SỐ 00–99
+</button>
+
+<div class="info" id="filterInfo">
+Dán dữ liệu vào ô trên rồi nhấn nút lọc số.
+</div>
+
+<label>Danh sách số đã lọc:</label>
 <input type="text" id="numbers"
 placeholder="Ví dụ: 12, 25, 36, 78">
 
@@ -176,9 +192,7 @@ Chưa chọn ngày.
 
 <h3>6. Xuất dữ liệu</h3>
 
-<button onclick="downloadData()">
-Xuất Excel (CSV)
-</button>
+<button onclick="downloadData()">Xuất Excel (CSV)</button>
 
 <button class="btn-green" onclick="backupData()">
 Sao lưu toàn bộ dữ liệu
@@ -223,6 +237,56 @@ function localDate() {
 
 document.getElementById("date").value = localDate();
 
+// TỰ ĐỘNG LỌC SỐ 00-99
+function filterNumbers() {
+  const raw = document.getElementById("rawData").value.trim();
+  const info = document.getElementById("filterInfo");
+
+  if (!raw) {
+    alert("Anh hãy dán dữ liệu vào trước!");
+    return;
+  }
+
+  let source = raw;
+
+  // Nếu có phần "Các số:" thì chỉ lấy nội dung phía sau
+  const marker = /(?:các\s*số(?:\s*cuối)?|danh\s*sách\s*số)\s*[:：]/i;
+  const match = source.match(marker);
+
+  if (match) {
+    source = source.slice(match.index + match[0].length);
+  } else {
+    // Tránh lấy nhầm số trong ngày tháng và tổng số kết quả
+    if (/ngày\s*[:：]|tổng\s*số\s*kết\s*quả/i.test(source)) {
+      alert("Không tìm thấy mục 'Các số:'. Anh kiểm tra lại dữ liệu nhé!");
+      return;
+    }
+  }
+
+  // Chỉ lấy các nhóm gồm 1 hoặc 2 chữ số độc lập
+  const found = source.match(/(?:^|\D)(\d{1,2})(?!\d)/g) || [];
+
+  const nums = found.map(item => {
+    const n = item.match(/\d+/)[0];
+    return n.padStart(2,"0");
+  });
+
+  if (nums.length === 0) {
+    alert("Không tìm thấy số hợp lệ từ 00 đến 99!");
+    return;
+  }
+
+  // Giữ nguyên số trùng lặp
+  document.getElementById("numbers").value = nums.join(", ");
+
+  info.innerHTML =
+    "Đã lọc thành công: <b>" + nums.length +
+    " số</b><br>" +
+    "Số trùng lặp vẫn được giữ nguyên.<br>" +
+    "Ngày thống kê vẫn giữ nguyên ngày anh đã chọn.";
+
+}
+
 function saveData() {
   const date = document.getElementById("date").value;
   const input = document.getElementById("numbers").value.trim();
@@ -254,6 +318,10 @@ function saveData() {
   if (!saveStorage()) return;
 
   document.getElementById("numbers").value = "";
+  document.getElementById("rawData").value = "";
+  document.getElementById("filterInfo").textContent =
+    "Đã lưu dữ liệu thành công.";
+
   render();
   alert("Đã lưu kết quả!");
 }
@@ -313,7 +381,9 @@ function render() {
     });
   });
 
-  const latestDate = Object.keys(history).sort().pop();
+  const latestDate = Object.keys(history)
+    .filter(date => date <= localDate())
+    .sort().pop();
 
   document.getElementById("total").innerHTML =
     "Số ngày thống kê: <b>" + dates.length +
@@ -391,6 +461,9 @@ function showHistory() {
 
 function clearInput() {
   document.getElementById("numbers").value = "";
+  document.getElementById("rawData").value = "";
+  document.getElementById("filterInfo").textContent =
+    "Đã xóa nội dung ô nhập.";
 }
 
 function downloadData() {
