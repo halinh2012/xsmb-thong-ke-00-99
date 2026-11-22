@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THỐNG KÊ XSMB 00-99</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2f7;
+  margin: 0;
+  padding: 15px;
+}
+.container {
+  max-width: 1000px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+h1 {
+  text-align: center;
+  color: #c62828;
+}
+input, button {
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+button {
+  background: #1565c0;
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+th {
+  background: #1565c0;
+  color: white;
+}
+.hot {
+  color: #d32f2f;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>THỐNG KÊ XSMB 00–99</h1>
+
+<h3>Nhập kết quả theo ngày</h3>
+<label>Ngày thống kê:</label><br>
+<input type="date" id="date"><br>
+
+<label>Nhập các số cuối (cách nhau bằng dấu cách hoặc dấu phẩy):</label><br>
+<input type="text" id="numbers"
+placeholder="Ví dụ: 12, 25, 36, 78" style="width:90%"><br>
+
+<button onclick="saveData()">Lưu kết quả</button>
+<button onclick="clearInput()">Xóa ô nhập</button>
+
+<h3>Bảng thống kê 00–99</h3>
+<p id="total">Chưa có dữ liệu.</p>
+<table>
+<thead>
+<tr>
+<th>Số</th>
+<th>Số lần xuất hiện</th>
+<th>Ngày xuất hiện gần nhất</th>
+</tr>
+</thead>
+<tbody id="result"></tbody>
+</table>
+
+<button onclick="downloadData()">Tải dữ liệu CSV</button>
+</div>
+
+<script>
+let history = JSON.parse(localStorage.getItem("xsmbData") || "{}");
+
+function saveData() {
+  const date = document.getElementById("date").value;
+  const input = document.getElementById("numbers").value.trim();
+
+  if (!date || !input) {
+    alert("Hãy nhập ngày và kết quả!");
+    return;
+  }
+
+  const nums = input.split(/[\s,;]+/).filter(Boolean);
+
+  if (!nums.every(n => /^\d{1,2}$/.test(n))) {
+    alert("Chỉ nhập số từ 0 đến 99!");
+    return;
+  }
+
+  if (history[date]) {
+    if (!confirm("Ngày này đã có dữ liệu. Bạn muốn thay thế?")) return;
+  }
+
+  history[date] = nums.map(n => n.padStart(2, "0"));
+  localStorage.setItem("xsmbData", JSON.stringify(history));
+
+  document.getElementById("numbers").value = "";
+  render();
+  alert("Đã lưu dữ liệu!");
+}
+
+function render() {
+  const counts = {};
+  const latest = {};
+  for (let i = 0; i < 100; i++) {
+    counts[String(i).padStart(2, "0")] = 0;
+  }
+
+  const dates = Object.keys(history).sort();
+
+  dates.forEach(date => {
+    history[date].forEach(num => {
+      counts[num]++;
+      latest[num] = date;
+    });
+  });
+
+  document.getElementById("total").textContent =
+    "Đã lưu " + dates.length + " ngày dữ liệu.";
+
+  const tbody = document.getElementById("result");
+  tbody.innerHTML = "";
+
+  Object.keys(counts).forEach(num => {
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
+    const td3 = document.createElement("td");
+
+    td1.textContent = num;
+    td2.textContent = counts[num];
+    td3.textContent = latest[num] || "Chưa xuất hiện";
+
+    if (counts[num] > 0) td2.className = "hot";
+
+    tr.append(td1, td2, td3);
+    tbody.appendChild(tr);
+  });
+}
+
+function clearInput() {
+  document.getElementById("numbers").value = "";
+}
+
+function downloadData() {
+  const rows = [["Ngày", "Các số cuối"]];
+  Object.keys(history).sort().forEach(date => {
+    rows.push([date, history[date].join(" ")]);
+  });
+
+  const csv = "\uFEFF" + rows.map(row =>
+    row.map(v => '"' + v + '"').join(",")
+  ).join("\n");
+
+  const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "thong-ke-xsmb.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+render();
+</script>
+</body>
+</html>
