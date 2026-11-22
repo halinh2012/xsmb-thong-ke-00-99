@@ -8,16 +8,6 @@
 body {
   font-family: Arial, sans-serif;
   background: #eef2f7;
-  padding: 15px;<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>THỐNG KÊ XSMB 00-99</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #eef2f7;
   padding: 15px;
 }
 .container {
@@ -97,6 +87,28 @@ placeholder="12, 25, 36, 78" style="width:90%"><br>
 <script>
 let history = JSON.parse(localStorage.getItem("xsmbData") || "{}");
 
+function getFilteredDates() {
+  const period = document.getElementById("period").value;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let startDate = null;
+
+  if (period === "year") {
+    startDate = new Date(today.getFullYear(), 0, 1);
+  } else if (period !== "all") {
+    startDate = new Date(today);
+    startDate.setDate(today.getDate() - Number(period) + 1);
+  }
+
+  return Object.keys(history).sort().filter(date => {
+    if (!startDate) return true;
+    const parts = date.split("-").map(Number);
+    const savedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    return savedDate >= startDate && savedDate <= today;
+  });
+}
+
 function saveData() {
   const date = document.getElementById("date").value;
   const input = document.getElementById("numbers").value.trim();
@@ -124,26 +136,7 @@ function saveData() {
 }
 
 function render() {
-  const period = document.getElementById("period").value;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let startDate = null;
-
-  if (period === "year") {
-    startDate = new Date(today.getFullYear(), 0, 1);
-  } else if (period !== "all") {
-    startDate = new Date(today);
-    startDate.setDate(today.getDate() - Number(period) + 1);
-  }
-
-  const dates = Object.keys(history).sort().filter(date => {
-    if (!startDate) return true;
-    const parts = date.split("-").map(Number);
-    const savedDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    return savedDate >= startDate && savedDate <= today;
-  });
-
+  const dates = getFilteredDates();
   const counts = {};
   const latest = {};
   let totalNumbers = 0;
@@ -171,8 +164,7 @@ function render() {
 
   Object.keys(counts).forEach(num => {
     const percent = totalNumbers > 0
-      ? (counts[num] / totalNumbers * 100)
-      : 0;
+      ? counts[num] / totalNumbers * 100 : 0;
 
     const div = document.createElement("div");
     div.className = "number";
@@ -200,26 +192,7 @@ function clearInput() {
 }
 
 function downloadData() {
-  const period = document.getElementById("period").value;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let startDate = null;
-
-  if (period === "year") {
-    startDate = new Date(today.getFullYear(), 0, 1);
-  } else if (period !== "all") {
-    startDate = new Date(today);
-    startDate.setDate(today.getDate() - Number(period) + 1);
-  }
-
-  const dates = Object.keys(history).sort().filter(date => {
-    if (!startDate) return true;
-    const parts = date.split("-").map(Number);
-    const savedDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    return savedDate >= startDate && savedDate <= today;
-  });
-
+  const dates = getFilteredDates();
   const counts = {};
   const latest = {};
   let totalNumbers = 0;
@@ -244,8 +217,7 @@ function downloadData() {
 
   Object.keys(counts).forEach(num => {
     const percent = totalNumbers > 0
-      ? (counts[num] / totalNumbers * 100)
-      : 0;
+      ? counts[num] / totalNumbers * 100 : 0;
 
     rows.push([
       num,
@@ -263,148 +235,6 @@ function downloadData() {
     type: "text/csv;charset=utf-8"
   });
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "thong-ke-xsmb.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-render();
-</script>
-</body>
-</html>
-}
-.container {
-  max-width: 1000px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-h1 { text-align: center; color: #c62828; }
-input, button {
-  padding: 10px;
-  margin: 5px 0;
-  border-radius: 6px;
-}
-button {
-  background: #1565c0;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-top: 15px;
-}
-.number {
-  border: 1px solid #ddd;
-  padding: 12px 5px;
-  text-align: center;
-  border-radius: 6px;
-}
-.hot { color: #d32f2f; font-weight: bold; }
-</style>
-</head>
-<body>
-<div class="container">
-<h1>THỐNG KÊ XSMB 00–99</h1>
-
-<h3>Nhập kết quả theo ngày</h3>
-<label>Ngày thống kê:</label><br>
-<input type="date" id="date"><br>
-
-<label>Nhập các số cuối (cách nhau bằng dấu cách hoặc dấu phẩy):</label><br>
-<input type="text" id="numbers" placeholder="12, 25, 36, 78" style="width:90%"><br>
-
-<button onclick="saveData()">Lưu kết quả</button>
-<button onclick="clearInput()">Xóa ô nhập</button>
-
-<h3>Bảng thống kê 00–99</h3>
-<p id="total">Chưa có dữ liệu.</p>
-<div id="result" class="grid"></div>
-
-<button onclick="downloadData()">Tải dữ liệu CSV</button>
-</div>
-
-<script>
-let history = JSON.parse(localStorage.getItem("xsmbData") || "{}");
-
-function saveData() {
-  const date = document.getElementById("date").value;
-  const input = document.getElementById("numbers").value.trim();
-
-  if (!date || !input) {
-    alert("Hãy nhập ngày và kết quả!");
-    return;
-  }
-
-  const nums = input.split(/[\s,;]+/).filter(Boolean);
-
-  if (!nums.every(n => /^\d{1,2}$/.test(n))) {
-    alert("Chỉ nhập số từ 0 đến 99!");
-    return;
-  }
-
-  if (history[date] && !confirm("Ngày này đã có dữ liệu. Thay thế?")) return;
-
-  history[date] = nums.map(n => n.padStart(2, "0"));
-  localStorage.setItem("xsmbData", JSON.stringify(history));
-  document.getElementById("numbers").value = "";
-  render();
-  alert("Đã lưu dữ liệu!");
-}
-
-function render() {
-  const counts = {};
-  const latest = {};
-  for (let i = 0; i < 100; i++) {
-    counts[String(i).padStart(2, "0")] = 0;
-  }
-
-  Object.keys(history).sort().forEach(date => {
-    history[date].forEach(num => {
-      counts[num]++;
-      latest[num] = date;
-    });
-  });
-
-  document.getElementById("total").textContent =
-    "Đã lưu " + Object.keys(history).length + " ngày dữ liệu.";
-
-  const result = document.getElementById("result");
-  result.innerHTML = "";
-
-  Object.keys(counts).forEach(num => {
-    const div = document.createElement("div");
-    div.className = "number";
-    div.innerHTML = "<b>" + num + "</b><br>" +
-      "<span class='" + (counts[num] > 0 ? "hot" : "") + "'>" +
-      counts[num] + " lần</span><br>" +
-      "<small>" + (latest[num] || "Chưa xuất hiện") + "</small>";
-    result.appendChild(div);
-  });
-}
-
-function clearInput() {
-  document.getElementById("numbers").value = "";
-}
-
-function downloadData() {
-  const rows = [["Ngày", "Các số cuối"]];
-  Object.keys(history).sort().forEach(date => {
-    rows.push([date, history[date].join(" ")]);
-  });
-
-  const csv = "\uFEFF" + rows.map(row =>
-    row.map(v => '"' + v + '"').join(",")
-  ).join("\n");
-
-  const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
