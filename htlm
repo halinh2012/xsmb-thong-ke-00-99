@@ -180,6 +180,6 @@ function downloadData() {
 }
 
 render();
-</script>
+</script
 </body>
 </html>
