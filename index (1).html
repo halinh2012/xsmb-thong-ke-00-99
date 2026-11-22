@@ -1,0 +1,93 @@
+ <!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THỐNG KÊ XSMB 00-99</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f1f4f9;
+    padding: 20px;
+}
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 900px;
+    margin: auto;
+    text-align: center;
+}
+.numbers {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+}
+.number {
+    background: #e5eaf2;
+    padding: 12px 2px;
+    border-radius: 5px;
+}
+textarea {
+    width: 90%;
+    margin: 10px;
+}
+button {
+    padding: 12px 25px;
+    background: #d71920;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>THỐNG KÊ XSMB 00–99</h1>
+
+<textarea id="data" rows="5"
+placeholder="Nhập kết quả xổ số tại đây..."></textarea>
+
+<br>
+<button onclick="thongKe()">THỐNG KÊ</button>
+
+<h2>BẢNG 100 SỐ</h2>
+
+<div id="result" class="numbers"></div>
+
+</div>
+
+<script>
+function thongKe() {
+    let data = document.getElementById("data").value;
+    let numbers = data.match(/\d+/g) || [];
+    let count = Array(100).fill(0);
+
+    numbers.forEach(n => {
+        let lastTwo = n.slice(-2);
+        count[Number(lastTwo)]++;
+    });
+
+    let html = "";
+
+    for (let i = 0; i < 100; i++) {
+        let so = String(i).padStart(2, "0");
+
+        html += `
+        <div class="number">
+            <b>${so}</b><br>
+            ${count[i]} lần
+        </div>`;
+    }
+
+    document.getElementById("result").innerHTML = html;
+}
+
+thongKe();
+</script>
+
+</body>
+</html>

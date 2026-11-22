@@ -1,0 +1,22 @@
+
+<!-- saved from url=(0033)file:///C:/Users/Admin/index.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>let html = "";
+
+    for (let i = 0; i &lt; 100; i++) {
+        let so = String(i).padStart(2, "0");
+
+        html += `
+        <div class="number">
+            <b>${so}</b><br>
+            ${count[i]} lần
+        </div>`;
+    }
+
+    document.getElementById("result").innerHTML = html;
+}
+
+thongKe();
+
+
+
+</body></html>
