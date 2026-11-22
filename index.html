@@ -4,70 +4,138 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>THỐNG KÊ XSMB 00-99</title>
+
 <style>
+* { box-sizing: border-box; }
+
 body {
   font-family: Arial, sans-serif;
   background: #eef2f7;
-  padding: 15px;
+  padding: 12px;
+  margin: 0;
 }
+
 .container {
   max-width: 1000px;
   margin: auto;
   background: white;
-  padding: 20px;
+  padding: 16px;
   border-radius: 12px;
 }
-h1 { text-align: center; color: #c62828; }
+
+h1 {
+  text-align: center;
+  color: #c62828;
+  font-size: 23px;
+}
+
+h3 {
+  font-size: 16px;
+  margin-top: 18px;
+}
+
 input, button, select {
-  padding: 10px;
+  padding: 9px;
   margin: 5px 0;
   border-radius: 6px;
+  border: 1px solid #ccc;
+  max-width: 100%;
 }
-input { max-width: 90%; }
+
+input[type="text"] { width: 100%; }
+
 button {
   background: #1565c0;
   color: white;
   border: none;
   cursor: pointer;
 }
+
+button:hover { opacity: .85; }
+
+.btn-green { background: #16834a; }
+.btn-orange { background: #e58b16; }
+.btn-gray { background: #666; }
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-top: 15px;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+  margin-top: 12px;
 }
+
 .number {
   border: 1px solid #ddd;
-  padding: 12px 5px;
+  padding: 7px 2px;
   text-align: center;
-  border-radius: 6px;
+  border-radius: 5px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
-.hot { color: #d32f2f; font-weight: bold; }
-@media (max-width: 500px) {
-  .grid { grid-template-columns: repeat(3, 1fr); }
-  .container { padding: 12px; }
+
+.number b {
+  font-size: 15px;
+}
+
+.hot {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.number small {
+  display: block;
+  color: #777;
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+.info {
+  background: #f3f6fa;
+  padding: 10px;
+  border-radius: 6px;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #ddd;
+  margin: 18px 0;
+}
+
+@media(max-width:600px) {
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+
+  .container { padding: 10px; }
+  h1 { font-size: 20px; }
 }
 </style>
 </head>
+
 <body>
 <div class="container">
+
 <h1>THỐNG KÊ XSMB 00–99</h1>
 
-<h3>Nhập kết quả theo ngày</h3>
+<h3>1. Nhập kết quả theo ngày</h3>
+
 <label>Ngày thống kê:</label><br>
 <input type="date" id="date"><br>
 
-<label>Nhập các số cuối (cách nhau bằng dấu cách hoặc dấu phẩy):</label><br>
+<label>Nhập các số cuối:</label>
 <input type="text" id="numbers"
-placeholder="12, 25, 36, 78" style="width:90%"><br>
+placeholder="Ví dụ: 12, 25, 36, 78">
 
 <button onclick="saveData()">Lưu kết quả</button>
-<button onclick="clearInput()">Xóa ô nhập</button>
+<button class="btn-gray" onclick="clearInput()">Xóa ô nhập</button>
 
 <hr>
 
-<h3>Bộ lọc thời gian</h3>
+<h3>2. Bộ lọc thời gian</h3>
+
 <select id="period" onchange="render()">
   <option value="7">7 ngày gần nhất</option>
   <option value="30" selected>30 ngày gần nhất</option>
@@ -77,37 +145,83 @@ placeholder="12, 25, 36, 78" style="width:90%"><br>
   <option value="all">Toàn bộ dữ liệu</option>
 </select>
 
-<h3>Bảng thống kê 00–99</h3>
-<p id="total">Chưa có dữ liệu.</p>
-<div id="result" class="grid"></div>
+<h3>3. Tìm kiếm số</h3>
+<input type="text" id="search"
+placeholder="Nhập số 00–99 để tìm..."
+maxlength="2"
+oninput="render()">
 
-<button onclick="downloadData()">Tải dữ liệu CSV</button>
+<h3>4. Bảng thống kê 00–99</h3>
+
+<div class="info" id="total">
+Chưa có dữ liệu.
+</div>
+
+<div class="grid" id="result"></div>
+
+<hr>
+
+<h3>5. Lịch sử kết quả</h3>
+
+<label>Chọn ngày muốn xem:</label><br>
+<select id="historyDate" onchange="showHistory()">
+  <option value="">Chọn ngày</option>
+</select>
+
+<div class="info" id="historyView">
+Chưa chọn ngày.
+</div>
+
+<hr>
+
+<h3>6. Xuất dữ liệu</h3>
+
+<button onclick="downloadData()">
+Xuất Excel (CSV)
+</button>
+
+<button class="btn-green" onclick="backupData()">
+Sao lưu toàn bộ dữ liệu
+</button>
+
+<hr>
+
+<h3>7. Khôi phục dữ liệu</h3>
+
+<input type="file" id="restoreFile"
+accept=".json,application/json">
+
+<button class="btn-orange" onclick="restoreData()">
+Khôi phục dữ liệu
+</button>
+
+<p class="info">
+Dữ liệu được lưu trên trình duyệt của máy tính.
+Hãy sao lưu định kỳ để tránh mất dữ liệu.
+</p>
+
 </div>
 
 <script>
-let history = JSON.parse(localStorage.getItem("xsmbData") || "{}");
+let history = {};
 
-function getFilteredDates() {
-  const period = document.getElementById("period").value;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let startDate = null;
-
-  if (period === "year") {
-    startDate = new Date(today.getFullYear(), 0, 1);
-  } else if (period !== "all") {
-    startDate = new Date(today);
-    startDate.setDate(today.getDate() - Number(period) + 1);
-  }
-
-  return Object.keys(history).sort().filter(date => {
-    if (!startDate) return true;
-    const parts = date.split("-").map(Number);
-    const savedDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    return savedDate >= startDate && savedDate <= today;
-  });
+try {
+  history = JSON.parse(
+    localStorage.getItem("xsmbData") || "{}"
+  );
+} catch(e) {
+  history = {};
 }
+
+function localDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+document.getElementById("date").value = localDate();
 
 function saveData() {
   const date = document.getElementById("date").value;
@@ -125,29 +239,73 @@ function saveData() {
     return;
   }
 
-  if (history[date] && !confirm("Ngày này đã có dữ liệu. Thay thế?")) return;
+  if (date > localDate()) {
+    alert("Không thể nhập ngày trong tương lai!");
+    return;
+  }
 
-  history[date] = nums.map(n => n.padStart(2, "0"));
-  localStorage.setItem("xsmbData", JSON.stringify(history));
+  if (history[date] &&
+      !confirm("Ngày này đã có dữ liệu. Bạn muốn thay thế?")) {
+    return;
+  }
+
+  history[date] = nums.map(n => n.padStart(2,"0"));
+
+  if (!saveStorage()) return;
 
   document.getElementById("numbers").value = "";
   render();
-  alert("Đã lưu dữ liệu!");
+  alert("Đã lưu kết quả!");
+}
+
+function saveStorage() {
+  try {
+    localStorage.setItem("xsmbData", JSON.stringify(history));
+    return true;
+  } catch(e) {
+    alert("Không thể lưu dữ liệu. Hãy kiểm tra dung lượng trình duyệt!");
+    return false;
+  }
+}
+
+function getFilteredDates() {
+  const period = document.getElementById("period").value;
+  const today = localDate();
+
+  let start = null;
+
+  if (period === "year") {
+    start = today.slice(0,4) + "-01-01";
+  } else if (period !== "all") {
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - Number(period) + 1);
+    start = d.getFullYear() + "-" +
+      String(d.getMonth()+1).padStart(2,"0") + "-" +
+      String(d.getDate()).padStart(2,"0");
+  }
+
+  return Object.keys(history)
+    .filter(date =>
+      date <= today && (!start || date >= start)
+    )
+    .sort();
 }
 
 function render() {
   const dates = getFilteredDates();
   const counts = {};
   const latest = {};
+
   let totalNumbers = 0;
 
-  for (let i = 0; i < 100; i++) {
-    counts[String(i).padStart(2, "0")] = 0;
+  for(let i=0; i<100; i++) {
+    counts[String(i).padStart(2,"0")] = 0;
   }
 
   dates.forEach(date => {
     (history[date] || []).forEach(num => {
-      if (counts[num] !== undefined) {
+      if(counts[num] !== undefined) {
         counts[num]++;
         totalNumbers++;
         latest[num] = date;
@@ -155,14 +313,23 @@ function render() {
     });
   });
 
-  document.getElementById("total").textContent =
-    "Đã thống kê " + dates.length + " ngày, tổng cộng " +
-    totalNumbers + " lần xuất hiện.";
+  const latestDate = Object.keys(history).sort().pop();
+
+  document.getElementById("total").innerHTML =
+    "Số ngày thống kê: <b>" + dates.length +
+    "</b><br>Tổng số lần xuất hiện: <b>" +
+    totalNumbers +
+    "</b><br>Ngày cập nhật gần nhất: <b>" +
+    (latestDate || "Chưa có") + "</b>";
 
   const result = document.getElementById("result");
   result.innerHTML = "";
 
+  const search = document.getElementById("search").value.trim();
+
   Object.keys(counts).forEach(num => {
+    if(search && !num.includes(search)) return;
+
     const percent = totalNumbers > 0
       ? counts[num] / totalNumbers * 100 : 0;
 
@@ -182,9 +349,44 @@ function render() {
     const date = document.createElement("small");
     date.textContent = latest[num] || "Chưa xuất hiện";
 
-    div.append(title, count, rate, date);
+    div.append(title,count,rate,date);
     result.appendChild(div);
   });
+
+  updateHistoryDates();
+}
+
+function updateHistoryDates() {
+  const select = document.getElementById("historyDate");
+  const oldValue = select.value;
+
+  select.innerHTML = '<option value="">Chọn ngày</option>';
+
+  Object.keys(history).sort().reverse().forEach(date => {
+    const option = document.createElement("option");
+    option.value = date;
+    option.textContent = date;
+    select.appendChild(option);
+  });
+
+  if(history[oldValue]) {
+    select.value = oldValue;
+  }
+}
+
+function showHistory() {
+  const date = document.getElementById("historyDate").value;
+  const view = document.getElementById("historyView");
+
+  if(!date || !history[date]) {
+    view.textContent = "Chưa chọn ngày.";
+    return;
+  }
+
+  view.textContent =
+    "Ngày: " + date +
+    " | Tổng số kết quả: " + history[date].length +
+    " | Các số: " + history[date].join(", ");
 }
 
 function clearInput() {
@@ -195,41 +397,42 @@ function downloadData() {
   const dates = getFilteredDates();
   const counts = {};
   const latest = {};
-  let totalNumbers = 0;
+  let total = 0;
 
-  for (let i = 0; i < 100; i++) {
-    counts[String(i).padStart(2, "0")] = 0;
+  for(let i=0; i<100; i++) {
+    counts[String(i).padStart(2,"0")] = 0;
   }
 
   dates.forEach(date => {
-    (history[date] || []).forEach(num => {
-      if (counts[num] !== undefined) {
+    history[date].forEach(num => {
+      if(counts[num] !== undefined) {
         counts[num]++;
-        totalNumbers++;
+        total++;
         latest[num] = date;
       }
     });
   });
 
   const rows = [
-    ["Số", "Số lần xuất hiện", "Tỷ lệ (%)", "Ngày gần nhất"]
+    ["Số","Số lần xuất hiện","Tỷ lệ (%)","Ngày gần nhất"]
   ];
 
   Object.keys(counts).forEach(num => {
-    const percent = totalNumbers > 0
-      ? counts[num] / totalNumbers * 100 : 0;
+    const rate = total > 0
+      ? (counts[num] / total * 100).toFixed(2) + "%"
+      : "0.00%";
 
     rows.push([
       num,
       counts[num],
-      percent.toFixed(2) + "%",
+      rate,
       latest[num] || "Chưa xuất hiện"
     ]);
   });
 
   const csv = "\uFEFF" + rows.map(row =>
     row.map(v => '"' + v + '"').join(",")
-  ).join("\n");
+  ).join("\r\n");
 
   const blob = new Blob([csv], {
     type: "text/csv;charset=utf-8"
@@ -237,10 +440,77 @@ function downloadData() {
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "thong-ke-xsmb.csv";
   a.click();
-  URL.revokeObjectURL(url);
+
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+}
+
+function backupData() {
+  const blob = new Blob(
+    [JSON.stringify(history,null,2)],
+    {type:"application/json"}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "sao-luu-xsmb.json";
+  a.click();
+
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+}
+
+function restoreData() {
+  const file = document.getElementById("restoreFile").files[0];
+
+  if(!file) {
+    alert("Hãy chọn tệp sao lưu!");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function() {
+    try {
+      const data = JSON.parse(reader.result);
+
+      if(!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error();
+      }
+
+      for(const [date,nums] of Object.entries(data)) {
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+           !Array.isArray(nums) ||
+           !nums.every(n => typeof n === "string" && /^\d{2}$/.test(n))) {
+          throw new Error();
+        }
+      }
+
+      if(!confirm("Khôi phục sẽ thay thế dữ liệu hiện tại. Tiếp tục?")) {
+        return;
+      }
+
+      const oldHistory = history;
+      history = data;
+
+      if(!saveStorage()) {
+        history = oldHistory;
+        return;
+      }
+
+      render();
+      alert("Khôi phục dữ liệu thành công!");
+
+    } catch(e) {
+      alert("Tệp sao lưu không hợp lệ!");
+    }
+  };
+
+  reader.readAsText(file);
 }
 
 render();
